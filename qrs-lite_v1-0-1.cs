@@ -1,9 +1,9 @@
 /*
-QRS-Lite v1.0.0
+QRS-Lite v1.0.1
 
 CREATED AND BUGTESTED BY THIRTY-TWO
 
-For reference, this takes much of its code from QRSv2.1.2. So, if you have experience with that,
+For reference, this takes much of its code from QRSv2.1.4. So, if you have experience with that,
 then this will end up very similar in usage for simply the Active Steering component.
 */
 
@@ -29,7 +29,7 @@ private float[] rearWheelAdjustment = {0f};
 private string mainControllerName = "Control Seat";
 
 // DON'T CHANGE THINGS BELOW HERE UNLESS YOU KNOW WHAT YOU'RE DOING
-private string programVersion = "1.0.0";
+private string programVersion = "1.0.1";
 private string setupErrorMessage = "";
 private int numSetupErrors = 0;
 
@@ -69,29 +69,22 @@ public void Main(string argument) {
 
 private void SetupControlSeat()
 {
-	var mainController = GridTerminalSystem.GetBlockWithName(mainControllerName) as IMyShipController;
-	if (mainController != null) { _mainController = (IMyShipController)mainController; return; }
-	
+    var control = GridTerminalSystem.GetBlockWithName(mainControllerName);
+    if (control != null) { _mainController = (IMyShipController)control; return; }
+
     var list = new List<IMyShipController>();
-
     GridTerminalSystem.GetBlocksOfType<IMyShipController>(list, c => c.CubeGrid == Me.CubeGrid);
+	
+	control = list.FirstOrDefault(c => c is IMyRemoteControl) ?? list.FirstOrDefault(c => c is IMyCockpit);
 
-    for (int i = 0; i < list.Count; i++)
-    {
-        if (list[i].BlockDefinition.ToString() == "MyObjectBuilder_Cockpit/PassengerSeatSmallOffset" || list[i].BlockDefinition.ToString() == "MyObjectBuilder_Cockpit/PassengerSeatSmallNew")
-        {
-            list.Remove(list[i]);
-        }
-    }
-
-    if (list.Count == 0)
+    if (control == null)
     {
         setupErrorMessage += "No valid IMyShipController Component found on craft.\n\n";
         numSetupErrors++;
     }
     if (setupErrorMessage != "") { return; }
 
-    _mainController = (IMyShipController)list[0];
+    _mainController = (IMyShipController)control;
 }
 
 private void SetupSuspensions()
